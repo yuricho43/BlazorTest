@@ -55,6 +55,7 @@ builder.Host.UseSerilog((context, configuration) => configuration
 
 //--------------------------------------------
 builder.Services.AddTelerikBlazor();
+builder.Services.AddHttpClient();
 
 //========================================================================
 var app = builder.Build();

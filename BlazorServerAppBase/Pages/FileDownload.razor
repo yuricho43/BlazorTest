@@ -1,0 +1,68 @@
+﻿@page "/filedownload"
+@inject HttpClient Http
+
+<h3>Download File from Remote Server</h3>
+
+<InputText @bind-Value="RemoteFilePath" placeholder="Enter remote file path (e.g., /uploads)" />
+<InputText @bind-Value="FileName" placeholder="Enter file name (e.g., example.txt)" />
+<button class="btn btn-primary" @onclick="DownloadFile">Download File</button>
+
+@if (DownloadMessage != null)
+{
+    <p>@DownloadMessage</p>
+}
+
+@code {
+    /*******************************************************************************************
+     * - (File Download)
+     * - Controller/FileController 추가.
+     * - FileDownload.razor 추가 ==> 필수로 Program.cs에 builder.Services.AddHttpClient();
+     * - _Host.html에 <script> 추가
+     * - MainLayout.razor 변경
+     * -
+     */
+
+    private string? RemoteFilePath;
+    private string? FileName;
+    private string? DownloadMessage;
+
+    private async Task DownloadFile()
+    {
+        if (string.IsNullOrEmpty(RemoteFilePath) || string.IsNullOrEmpty(FileName))
+        {
+            DownloadMessage = "Please enter the remote file path and file name.";
+            return;
+        }
+
+        try
+        {
+            var response = await Http.GetAsync($"https://localhost/api/files/download?remotePath={Uri.EscapeDataString(RemoteFilePath)}&fileName={Uri.EscapeDataString(FileName)}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var fileContent = await response.Content.ReadAsByteArrayAsync();
+                var fileType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+
+                // JavaScript로 파일 다운로드 트리거
+                await JS.InvokeVoidAsync(
+                    "downloadFile",
+                    FileName,
+                    fileType,
+                    Convert.ToBase64String(fileContent)
+                );
+
+                DownloadMessage = "File downloaded successfully.";
+            }
+            else
+            {
+                DownloadMessage = $"Failed to download file: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            DownloadMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+}
