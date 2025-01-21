@@ -1,0 +1,127 @@
+﻿@inherits LayoutComponentBase
+@using Telerik.FontIcons;
+@using Telerik.SvgIcons;
+
+<style>
+    .drawer {
+        height: 90%
+    }
+</style>
+<TelerikRootComponent>
+
+        <div class="header">
+            <div class="nav-container" style="margin-right: 2em;">
+                <div class="menu-button">
+                    <TelerikButton Icon="@SvgIcon.Menu" OnClick="ToggleMenuDrawer"></TelerikButton>
+                </div>
+                <div class="title">
+                    <h1>@($"{Constants.BaseTitle} ({Constants.BaseVersion})")</h1>
+                </div>
+                @{
+                    if (!WindowWidthSmall)
+                    {
+                            <DigitalClock></DigitalClock>
+                    }
+                }
+                &nbsp;&nbsp;
+                <AuthorizeView>
+                    <Authorized>
+                        <NavLink class="text-decoration-none" href="Identity/Account/Logout">Logout</NavLink>
+                    </Authorized>
+                    <NotAuthorized>
+                        <div class="w-100 d-flex justify-content-end gap-5">
+                            <NavLink class="text-decoration-none" href="Identity/Account/Login">Login</NavLink>
+                        </div>
+                    </NotAuthorized>
+                </AuthorizeView>
+                &nbsp;&nbsp;
+                <a href="https://www.fstc.co.kr" class="reload">FST</a>
+            </div>
+        </div>
+
+        <TelerikTooltip TargetSelector=".k-drawer-items span.icon-container[title]" />
+        <TelerikDrawer class="drawer"
+                       @ref="BlazorDrawer"
+                       Data="@BlazorDrawerItems"
+                       Expanded="@DrawerExpanded"
+                       ExpandedChanged="((bool newValue) => ExpandedChangedHandler(newValue))"
+                       Width="150px" Mode="DrawerMode.Push" Position="DrawerPosition.Start" MiniMode="true">
+
+            <ItemTemplate Context="item">
+
+                @* When UrlField is set or there is Url property, the Drawer will navigate automatically. *@
+
+                <span class="icon-container" title="@item.Title">
+                    <TelerikSvgIcon Icon="@item.Icon" />
+                </span>
+                <span class="k-item-text">@item.Text</span>
+
+                @* *** *@
+                @* When UrlField is not set and there is no Url property, navigate manually with NavLink or NavigationManager. *@
+        </ItemTemplate>
+        <DrawerContent>
+                @Body
+            </DrawerContent>
+        </TelerikDrawer>
+</TelerikRootComponent>
+
+@code {
+    bool DrawerExpanded { get; set; }
+    bool WindowWidthSmall { get; set; }
+
+    TelerikDrawer<DrawerItem> BlazorDrawer { get; set; }
+    public IEnumerable<DrawerItem> BlazorDrawerItems { get; set; }
+
+
+    List<DrawerItem> BlazorPages { get; set; } = new List<DrawerItem>
+    {
+        new DrawerItem { Text = "파일업다운", Title="파일업다운", Url = "/fileupdown", Icon =SvgIcon.Upload },
+        new DrawerItem { Separator = true },
+        new DrawerItem { Text = "데이타 입력", Title="데이타 입력", Url = "/input", Icon = SvgIcon.Grid },
+        new DrawerItem { Text = "데이타 검색", Title="데이타 검색", Url = "/search", Icon = SvgIcon.Search },
+        new DrawerItem { Text = "DashBoard", Title="DashBoard", Url = "/dashboard", Icon = SvgIcon.Data },
+        new DrawerItem { Text = "Help", Title="Help", Url = "/help", Icon = SvgIcon.Sparkles },
+        new DrawerItem { Separator = true },
+        new DrawerItem { Text = "Admin", Title="Admin", Url = "/adminpage", Icon = SvgIcon.Eyedropper },
+        new DrawerItem { Separator = true }
+    };
+
+    public class DrawerItem
+    {
+        public string Text { get; set; }
+        public string Title { get; set; }
+        public ISvgIcon Icon { get; set; }
+        public string Url { get; set; }
+        public bool Separator { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        DrawerExpanded = true;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        BlazorDrawerItems = BlazorPages;
+        if (BlazorDrawer != null)
+            await BlazorDrawer.ExpandAsync();
+        StateHasChanged();
+    }
+
+    async Task ExpandedChangedHandler(bool value)
+    {
+        DrawerExpanded = value;
+    }
+
+    async Task ToggleMenuDrawer()
+    {
+        if (DrawerExpanded)
+        {
+            await BlazorDrawer.CollapseAsync();
+        }
+        else
+        {
+            await BlazorDrawer.ExpandAsync();
+        }
+    }
+}

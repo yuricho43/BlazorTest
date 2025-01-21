@@ -1,0 +1,90 @@
+﻿@page "/fileupdown"
+@using BlazorServerAppBase.Entities;
+@using Telerik.DataSource
+@using Telerik.DataSource.Extensions
+@using Telerik.FontIcons;
+
+@inject ILogger<AuthTest> Logger
+
+<PageTitle>파일 업/다운 예시</PageTitle>
+
+<PageTitle>FST Digital System</PageTitle>
+<div class="card-header text-lg-center pt-2 pb-2 fw-bold px-9"> 파일 업/다운 (SFTP이용) </div>
+
+<h3>Upload File to Remote Linux Server</h3>
+
+<InputFile OnChange="HandleFileSelected" />
+<InputText @bind-Value="RemoteDirectory" placeholder="Enter remote directory" />
+<button class="btn btn-primary" @onclick="UploadFile">Upload File</button>
+
+@if (UploadMessage != null)
+{
+    <p>@UploadMessage</p>
+}
+
+@code {
+    /*******************************************************************************************
+     * 1. SSH.NET package 설치 (2024.2.0)
+     */
+
+    private IBrowserFile? SelectedFile;
+    private string? RemoteDirectory;
+    private string? UploadMessage;
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        SelectedFile = e.File;
+    }
+
+    private async Task UploadFile()
+    {
+        if (SelectedFile == null)
+        {
+            UploadMessage = "Please select a file.";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(RemoteDirectory))
+        {
+            UploadMessage = "Please enter a remote directory.";
+            return;
+        }
+
+        try
+        {
+            using var stream = SelectedFile.OpenReadStream();
+            await UploadFileToSftp(stream, SelectedFile.Name, RemoteDirectory);
+            UploadMessage = "File uploaded successfully.";
+        }
+        catch (Exception ex)
+        {
+            UploadMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task UploadFileToSftp(Stream fileStream, string fileName, string remoteDirectory)
+    {
+        var sftpHost = "192.168.27.238";
+        var sftpPort = 22; // 기본 SFTP 포트
+        var sftpUser = "dxsystem";
+        var sftpPassword = "1q2w3e4r!@";
+
+        using var client = new Renci.SshNet.SftpClient(sftpHost, sftpPort, sftpUser, sftpPassword);
+        client.Connect();
+
+        if (!client.Exists(remoteDirectory))
+        {
+            client.CreateDirectory(remoteDirectory);
+        }
+
+        var remoteFilePath = $"{remoteDirectory.TrimEnd('/')}/{fileName}";
+
+        using var memoryStream = new MemoryStream();
+        await fileStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0; // 스트림의 위치를 처음으로 설정
+        client.UploadFile(memoryStream, remoteFilePath);
+
+        client.Disconnect();
+    }
+}
+
