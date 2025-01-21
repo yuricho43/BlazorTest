@@ -36,12 +36,17 @@
 
         try
         {
+            Console.WriteLine("--- FileDownload:DownloadFile1");
+
             var response = await Http.GetAsync($"https://localhost/api/files/download?remotePath={Uri.EscapeDataString(RemoteFilePath)}&fileName={Uri.EscapeDataString(FileName)}");
 
+            Console.WriteLine("--- FileDownload:DownloadFile2");
             if (response.IsSuccessStatusCode)
             {
+                Console.WriteLine("--- FileDownload:DownloadFile3");
                 var fileContent = await response.Content.ReadAsByteArrayAsync();
                 var fileType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+                Console.WriteLine("--- FileDownload:DownloadFile4");
 
                 // JavaScript로 파일 다운로드 트리거
                 await JS.InvokeVoidAsync(
@@ -57,9 +62,11 @@
             {
                 DownloadMessage = $"Failed to download file: {response.ReasonPhrase}";
             }
+            Console.WriteLine("--- FileDownload:DownloadFile5");
         }
         catch (Exception ex)
         {
+            Console.WriteLine("--- FileDownload:DownloadFile6");
             DownloadMessage = $"Error: {ex.Message}";
         }
     }

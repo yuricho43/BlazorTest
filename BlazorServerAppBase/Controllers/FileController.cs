@@ -17,6 +17,7 @@ namespace BlazorServerAppBase.Controllers
                 var sftpUser = "dxsystem";
                 var sftpPassword = "1q2w3e4r!@";
 
+                Console.WriteLine("--- Controller:DownloadFile");
                 using var client = new Renci.SshNet.SftpClient(sftpHost, sftpPort, sftpUser, sftpPassword);
                 client.Connect();
 
