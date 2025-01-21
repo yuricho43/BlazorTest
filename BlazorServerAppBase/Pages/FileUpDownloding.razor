@@ -71,6 +71,9 @@
         var sftpUser = "dxsystem";
         var sftpPassword = "1q2w3e4r!@";
 
+        string strMonth = DateTime.Now.ToString("yyyy-MM");
+        remoteDirectory = Path.Combine(remoteDirectory, strMonth);
+
         using var client = new Renci.SshNet.SftpClient(sftpHost, sftpPort, sftpUser, sftpPassword);
         client.Connect();
 
